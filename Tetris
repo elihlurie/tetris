@@ -331,16 +331,16 @@ function block(color){
            case "orange":
            		if(rotation == 0){
                 	if(squaresY[0]-3 >= 0){
-                    	if(board[squaresX[0]+3][squaresY[0]-3] == "white" && board[squaresX[1]+2][squaresY[1]-2] == "white" && board[squaresX[2]+1][squaresY[2]-1] == "white"){
+                    	if(board[squaresX[0]+2][squaresY[0]-3] == "white" && board[squaresX[1]+1][squaresY[1]-2] == "white" && board[squaresX[3]-1][squaresY[3]-1] == "white"){
                         	for(var i=0; i<squaresX.length; i++){
                             	board[squaresX[i]][squaresY[i]] = "white";
                             }
-                            squaresX[0]+=3;
+                            squaresX[0]+=2;
                             squaresY[0]-=3;
-                            squaresX[1]+=2;
+                            squaresX[1]+=1;
                             squaresY[1]-=2;
-                            squaresX[2]++;
-                            squaresY[2]--;
+                            squaresX[3]--;
+                            squaresY[3]--;
                             for(var i=0; i<squaresX.length; i++){
                             	board[squaresX[i]][squaresY[i]] = this.color;
                             }
@@ -349,17 +349,17 @@ function block(color){
                     }
                 }
                 else if(rotation == 1){
-                	if(squaresX[0]-3 >= 0){
-                    	if(board[squaresX[0]-3][squaresY[0]+3] == "white" && board[squaresX[1]-2][squaresY[1]+2] == "white" && board[squaresX[2]-1][squaresY[2]+1] == "white"){
+                	if(squaresX[0]-2 >= 0){
+                    	if(board[squaresX[0]-2][squaresY[0]+3] == "white" && board[squaresX[1]-1][squaresY[1]+2] == "white" && board[squaresX[3]+1][squaresY[3]+1] == "white"){
                         	for(var i=0; i<squaresX.length; i++){
                             	board[squaresX[i]][squaresY[i]] = "white";
                             }
-                            squaresX[0]-=3;
+                            squaresX[0]-=2;
                             squaresY[0]+=3;
-                            squaresX[1]-=2;
+                            squaresX[1]-=1;
                             squaresY[1]+=2;
-                            squaresX[2]--;
-                            squaresY[2]++;
+                            squaresX[3]++;
+                            squaresY[3]++;
                             for(var i=0; i<squaresX.length; i++){
                             	board[squaresX[i]][squaresY[i]] = this.color;
                             }
