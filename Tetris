@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:0px solid black;
+    background-color: white;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var board = new Array(10);
+var currentBlock;
+var rowsCleared = 0;
+var level = 1;
+var score = -20;
+var speed = 300;
+var highScore = 0;
+var paused = false;
+var nextPiece = "blue";
+var gameLost = true;
+var highLevel = 1;
+
+function startGame(){
+	createBoard();
+	canvas.start();
+	beginGame();
+}
+
+var canvas = {
+	canvas : document.createElement("canvas"),
+    start : function(){
+    	this.canvas.width = 420;
+        this.canvas.height = 420;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.interval2 = setInterval(gravity, speed);
+        
+        window.addEventListener('keydown', function (e){
+        	keyPressed(e.keyCode);
+    	});
+	},
+    clear : function(){
+    	this.context.clearRect(0,0,this.canvas.width, this.canvas.height);
+   	},
+    changeGravity : function(){
+    	clearInterval(this.interval2);
+        this.interval2 = setInterval(gravity, speed);
+    },
+    pause : function(){
+    	clearInterval(this.interval);
+        clearInterval(this.interval2);
+    },
+    unpause : function(){
+    	this.interval = setInterval(displayBoard, 20);
+        this.interval2 = setInterval(gravity, speed);
+    }
+}
+
+function createBoard(){	
+	for(var i=0; i<board.length; i++){
+		board[i] = new Array(21);
+	}
+    for(var i=0; i<board.length; i++){
+    	for(var j=0; j<board[0].length; j++){
+        	board[i][j] = "white";
+        }
+    }
+}
+
+
+function block(color){
+	var squaresX = [];
+    var squaresY = [];
+    var rotation = 0;
+    this.color = color;
+    
+    switch(color){
+    	case "green":
+        	squaresX = [4,5,5,6];
+            squaresY = [1,1,0,0];
+            break;
+        case "blue":
+        	squaresX = [4,5,5,6];
+            squaresY = [0,0,1,1];
+            break;
+        case "yellow":
+        	squaresX = [4,5,5,6];
+            squaresY = [0,0,1,0];
+            break;
+        case "red":
+        	squaresX = [4,5,4,5];
+            squaresY = [0,0,1,1];
+            break;
+        case "orange":
+        	squaresX = [3,4,5,6];
+            squaresY = [0,0,0,0];
+            break;
+        case "darkorchid":
+        	squaresX = [4,5,6,6];
+           	squaresY = [0,0,0,1];
+            break;
+        case "deepskyblue":
+        	squaresX = [4,4,5,6];
+            squaresY = [1,0,0,0];
+            break;
+        displayBoard();
+	}
+    
+    this.newPos = function(moveX, moveY){
+    	var xChange = false;
+        var yChange = true;
+        var nextBlock = false;
+        if(moveY == 0){
+        	yChange = false;
+        }
+        
+    	if(moveX < 0 && squaresX[0] > 0){
+        	xChange = true;
+        }
+        else if(moveX > 0 && squaresX[3] < 9){
+        	xChange = true;
+        }
+        
+        if(xChange){
+        	for(var i=0; i<squaresX.length; i++){
+            	var con = true;
+                for(var j=0; j<squaresX.length; j++){
+                	if(squaresX[i]+moveX == squaresX[j] && squaresY[i] == squaresY[j]){
+                    	con = false;
+                    }
+                }
+                if(con && board[squaresX[i]+moveX][squaresY[i]] != "white"){
+                	xChange = false;
+                }
+            }
+        }
+        
+        if(yChange){
+        	for(var i=0; i<squaresY.length; i++){
+        		if(squaresY[i] == 20){
+            		yChange = false;
+                    nextBlock = true;
+            	}
+        	}
+        }
+        
+        if(yChange){
+    		for(var i=0; i<squaresX.length; i++){
+        		var con = true;
+        		for(var j=0; j<squaresX.length; j++){
+            		if(squaresX[i] == squaresX[j] && squaresY[i]+1 == squaresY[j]){
+                		con = false;
+                	}
+            	}
+            	if(con && board[squaresX[i]][squaresY[i]+1] != "white"){
+            		yChange = false;
+                    nextBlock = true;
+        	    }
+        	}
+        }
+        
+        
+        if(xChange){
+        	this.moveBlock(moveX, 0);
+        }
+        if(yChange){
+        	this.moveBlock(0, moveY);
+        }
+        if(nextBlock){
+        	newBlock();
+        }
+    }
+    
+    this.moveBlock = function(moveX, moveY){
+    	for(var i=0; i<squaresX.length; i++){
+        	board[squaresX[i]][squaresY[i]] = "white";
+            squaresX[i] += moveX;
+            squaresY[i] += moveY;
+        }
+        for(var i=0; i<squaresX.length; i++){
+        	board[squaresX[i]][squaresY[i]] = this.color;
+        }
+    }
+    
+    this.rotate = function(){
+    	switch(this.color){
+        	case "green":
+            	if(rotation == 0){
+                    if(squaresY[0]-2 >= 0){
+                    	if(board[squaresX[0]+1][squaresY[0]-2] == "white" && board[squaresX[1]+1][squaresY[1]] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0] += 1;
+                            squaresY[0] -= 2;
+                            squaresX[1] += 1;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 1;
+                        }
+                    }
+                }
+                else if(rotation == 1){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]+2] == "white" && board[squaresX[1]-1][squaresY[1]] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0] -= 1;
+                            squaresY[0] += 2;
+                            squaresX[1] -= 1;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 0;
+                        }
+                    }
+                }
+                break;
+                
+           case "blue":
+           		if(rotation == 0){
+                	if(squaresY[3]-2 >= 0){
+                    	if(board[squaresX[3]][squaresY[3]-2] == "white" && board[squaresX[1]+1][squaresY[1]] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0] ++;
+                            squaresX[1] ++;
+                            squaresY[3] -=2;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 1;
+                        }
+                    }
+                }
+                else if(rotation == 1){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]] == "white" && board[squaresX[3]][squaresY[3]+2] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0] --;
+                            squaresX[1] --;
+                            squaresY[3] +=2;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 0;
+                        }
+                    }
+                }
+           		break;
+           case "yellow":
+                if(rotation == 0){
+                	if(squaresY[3]-1 >= 0){
+                    	if(board[squaresX[2]+1][squaresY[2]] == "white" && board[squaresX[3]][squaresY[3]-1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]++;
+                            squaresX[1]++;
+                            squaresX[2]++;
+                            squaresY[3]--;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 1;
+                        }
+                    }
+                }
+                else if(rotation == 1){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]+1] == "white" && board[squaresX[2]-1][squaresY[2]] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]--;
+                            squaresY[0]++;
+                            squaresX[1]--;
+                            squaresX[2]--;
+                            squaresY[3]+=2;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 2;
+                        }
+                    }
+                }
+                else if(rotation == 2){
+                	if(squaresY[1]-1 >= 0){
+                    	if(board[squaresX[1]][squaresY[1]-1] == "white" && board[squaresX[3]][squaresY[3]-1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]++;
+                            squaresY[1]--;
+                            squaresY[2]--;
+                            squaresY[3]--;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 3;
+                        }
+                    }
+                }
+                else if(rotation == 3){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]-1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]--;
+                            squaresY[0]--;
+                            squaresY[1]++;
+                            squaresY[2]++;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 0;
+                        }
+                    }
+                }
+                break;
+           case "orange":
+           		if(rotation == 0){
+                	if(squaresY[0]-3 >= 0){
+                    	if(board[squaresX[0]+3][squaresY[0]-3] == "white" && board[squaresX[1]+2][squaresY[1]-2] == "white" && board[squaresX[2]+1][squaresY[2]-1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]+=3;
+                            squaresY[0]-=3;
+                            squaresX[1]+=2;
+                            squaresY[1]-=2;
+                            squaresX[2]++;
+                            squaresY[2]--;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 1;
+                        }
+                    }
+                }
+                else if(rotation == 1){
+                	if(squaresX[0]-3 >= 0){
+                    	if(board[squaresX[0]-3][squaresY[0]+3] == "white" && board[squaresX[1]-2][squaresY[1]+2] == "white" && board[squaresX[2]-1][squaresY[2]+1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]-=3;
+                            squaresY[0]+=3;
+                            squaresX[1]-=2;
+                            squaresY[1]+=2;
+                            squaresX[2]--;
+                            squaresY[2]++;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 0;
+                        }
+                    }
+                }
+           		break;
+           case "darkorchid":
+           		if(rotation == 0){
+                	if(squaresY[1]-1 >= 0){
+                    	if(board[squaresX[0]+1][squaresY[1]+1] == "white" && board[squaresX[1]+1][squaresY[1]-1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]++;
+                            squaresY[0]++;
+                            squaresX[1]++;
+                            squaresY[1]--;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 1;
+                        }
+                    }
+                }
+                else if(rotation == 1){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]] == "white" && board[squaresX[1]-2][squaresY[1]+1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]--;
+                            squaresX[1]-=2;
+                            squaresY[1]++;
+                            squaresX[2]--;
+                            squaresY[2]++;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 2;
+                        }
+                    }
+                }
+                else if(rotation == 2){
+                	if(squaresY[3]-2 >= 0){
+                    	if(board[squaresX[1]+1][squaresY[1]] == "white" && board[squaresX[2]][squaresY[1]-2] == "white" && board[squaresX[3]][squaresY[3]-2] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]++;
+                            squaresX[1]++;
+                            squaresY[2]-=2;
+                            squaresY[3]-=2;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 3;
+                        }
+                    }
+                }
+                else if(rotation == 3){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]-1] == "white" && board[squaresX[2]+1][squaresY[2]+1] == "white" && board[squaresX[3]][squaresY[3]+2] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]--;
+                            squaresY[0]--;
+                            squaresX[2]++;
+                            squaresY[2]++;
+                            squaresY[3]+=2;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 0;
+                        }
+                    }
+                }
+           		break;
+           case "deepskyblue":
+           		if(rotation == 0){
+                	if(squaresY[0]-2 >= 0){
+                    	if(board[squaresX[0]+1][squaresY[0]-2] == "white" && board[squaresX[1]+2][squaresY[1]-1] == "white" && board[squaresX[3]][squaresY[3]+1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]++;
+                            squaresY[0]-=2;
+                            squaresX[1]+=2;
+                            squaresY[1]--;
+                            squaresX[2]++;
+                            squaresY[3]++;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 1;
+                        }
+                    }
+                }
+                else if(rotation == 1){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]+2] == "white" && board[squaresX[1]-1][squaresY[1]+2] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]--;
+                            squaresY[0]+=2;
+                            squaresX[1]--;
+                            squaresY[1]+=2;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 2;
+                        }
+                    }
+                }
+                else if(rotation == 2){
+                	if(squaresY[1]-2 >= 0){
+                    	if(board[squaresX[1]][squaresY[1]-2] == "white" && board[squaresX[2]-1][squaresY[2]] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]++;
+                            squaresY[1]-=2;
+                            squaresX[2]--;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 3;
+                        }
+                    }
+                }
+                else if(rotation == 3){
+                	if(squaresX[0]-1 >= 0){
+                    	if(board[squaresX[0]-1][squaresY[0]] == "white" && board[squaresX[1]-1][squaresY[1]+1] == "white" && board[squaresX[3]][squaresY[3]-1] == "white"){
+                        	for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = "white";
+                            }
+                            squaresX[0]--;
+                            squaresX[1]--;
+                            squaresY[1]++;
+                            squaresY[3]--;
+                            for(var i=0; i<squaresX.length; i++){
+                            	board[squaresX[i]][squaresY[i]] = this.color;
+                            }
+                            rotation = 0;
+                        }
+                    }
+                }
+           		break;
+           default:
+        }
+        displayBoard();
+    }
+}
+
+function displayBoard(){
+	canvas.clear();
+	ctx = canvas.context;
+	for(var i=0; i<board.length; i++){
+    	for(var j=0; j<board[0].length; j++){
+        	ctx.fillStyle = board[i][j];
+            if(board[i][j] == "white"){
+            	ctx.fillStyle = "black";
+            }
+            ctx.fillRect(i*20, j*20, 20, 20);
+		}
+    }
+    ctx.fillStyle = "white";
+    ctx.fillRect(0,0,200,20);
+    
+    ctx.font = "40px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("Tetris",250,50);
+    ctx.font = "15px Arial";
+    ctx.fillText("arrow keys or wasd", 230, 100);
+    ctx.fillText("space to pause", 230,120);
+    ctx.fillText("Rows cleared: " + rowsCleared, 230,160);
+    ctx.fillText("Level: " + level, 230,180);
+    ctx.fillText("Score: " + score, 230,200);
+    ctx.fillText("Highscore: " + highScore, 230,220);
+    ctx.fillText("Highest level: " + highLevel, 230,240);
+    
+    ctx.fillText("Next block: ", 230, 280);
+    ctx.fillStyle = nextPiece;
+    var x = 230;
+    var y = 300;
+    switch(nextPiece){
+    	case "green":
+        	ctx.fillRect(x+20, y, 40, 20);
+            ctx.fillRect(x, y+20, 40, 20);
+            break;
+        case "blue":
+        	ctx.fillRect(x, y, 40, 20);
+            ctx.fillRect(x+20, y+20, 40, 20);
+            break;
+        case "yellow":
+        	ctx.fillRect(x, y, 60, 20);
+            ctx.fillRect(x+20, y+20, 20, 20);
+            break;
+        case "red":
+        	ctx.fillRect(x, y, 40, 40);
+            break;
+        case "orange":
+        	ctx.fillRect(x, y, 80, 20);
+            break;
+        case "darkorchid":
+        	ctx.fillRect(x, y, 60, 20);
+            ctx.fillRect(x+40, y+20, 20, 20);
+            break;
+       	case "deepskyblue":
+        	ctx.fillRect(x, y, 60, 20);
+            ctx.fillRect(x, y+20, 20, 20);
+            break;
+    }
+    
+    if(paused){
+    	ctx.fillStyle = "black";
+    	ctx.fillRect(0,20,200,400);
+    	ctx.fillStyle = "white";
+        if(gameLost){
+        	ctx.font = "20px Arial";
+            ctx.fillText("press enter to start", 17, 150);
+        }
+        else{
+            ctx.font = "40px Arial";
+    		ctx.fillText("paused",40,150);
+        }
+    }
+}
+
+function newBlock(){
+	score += (20*level);
+	clearRow();
+    
+    var lose = false;
+    var toLose = false;
+    for(var i=0; i<board.length; i++){
+    	if(board[i][1] != "white"){
+        	lose = true;
+        }
+        if(board[i][2] != "white"){
+        	toLose = true;
+        }
+    }
+    
+    if(lose){
+    	loseGame();
+    }
+    else{
+		var newType = Math.floor(Math.random() * 7) + 1;
+    	var newColor;
+    	if(newType == 1){
+    		newColor = "green";
+    	}
+    	else if(newType == 2){
+    		newColor = "blue";
+    	}
+    	else if(newType == 3){
+    		newColor = "yellow";
+    	}
+    	else if(newType == 4){
+    		newColor = "red";
+   		}
+    	else if(newType == 5){
+    		newColor = "orange";
+    	}
+    	else if(newType == 6){
+    		newColor = "darkorchid";
+    	}
+    	else{
+    		newColor = "deepskyblue";
+    	}
+		currentBlock = new block(nextPiece);
+    	nextPiece = newColor;
+    }
+    displayBoard();
+}
+
+function gravity(){
+	currentBlock.newPos(0,1);
+    displayBoard();
+}
+
+function keyPressed(key){
+	if((key == 37 || key == 65)&& !paused){
+    	currentBlock.newPos(-1,0);
+    }
+    else if((key == 39 || key == 68) && !paused){
+    	currentBlock.newPos(1,0);
+   	}
+    else if((key == 40 || key == 83) && !paused){
+    	currentBlock.newPos(0,1);
+    }
+    else if((key == 38 || key == 87) && !paused){
+    	currentBlock.rotate();
+    }
+    else if(key == 32 || key == 80 || key == 13){
+    	if(!paused){
+        	canvas.pause();
+            paused = true;
+            displayBoard();
+        }
+        else{
+        	canvas.unpause();
+            paused = false;
+            gameLost = false;
+        }
+    }
+    displayBoard();
+}
+
+function clearRow(){
+	var numClear = 0;
+	for(var i=0; i<board[0].length; i++){
+    	var filled = true;
+    	for(var j=0; j<board.length; j++){
+        	if(board[j][i] == "white"){
+            	filled = false;
+            }
+        }
+        
+        if(filled){
+        	moveBoardDown(i);
+            rowsCleared++;
+            numClear++;
+            score += (150*level);
+            if(rowsCleared % 10 == 0){
+                score += (250*level);
+                level++;
+                changeSpeed();
+            }
+        }
+    }
+    if(numClear == 4){
+    	score += (1000*level);
+    }
+}
+
+function moveBoardDown(row){
+	for(var i=0; i<board.length; i++){
+    	var nextColor = "white";
+    	for(var j=0; j<=row; j++){
+        	var thisColor = board[i][j];
+            board[i][j] = nextColor;
+            nextColor = thisColor;
+        }
+    }
+}
+
+function clearBoard(){
+	for(var i=0; i<board.length; i++){
+    	for(var j=0; j<board[0].length; j++){
+        	board[i][j] = "white";
+        }
+    }
+}
+
+function changeSpeed(){
+	switch(level){
+    	case 1:
+        	speed = 350;
+            break;
+    	case 2:
+        	speed = 320;
+            break;
+       case 3:
+       		speed = 290;
+            break;
+       case 4:
+       		speed = 260;
+            break;
+       case 5:
+       		speed = 240;
+            break;
+       case 6:
+       		speed = 220;
+            break;
+       case 7:
+       		speed = 200;
+            break;
+       case 8:
+       		speed = 185;
+            break;
+       case 9:
+       		speed = 170;
+            break;
+       case 10:
+       		speed = 155;
+            break;
+       case 11:
+       		speed = 145;
+            break;
+       case 12:
+       		speed = 135;
+            break;
+       case 13:
+       		speed = 125;
+       		break;
+       case 14:
+       		speed = 120;
+            break;
+       case 15:
+       		speed = 115;
+            break;
+       case 16:
+       		speed = 110;
+            break;
+       case 17:
+       		speed = 107;
+       		break;
+       case 18:
+       		speed = 104;
+            break;
+       case 19:
+       		speed = 101;
+            break;
+       default:
+       		speed = 100;
+    }
+    canvas.changeGravity();
+}
+
+function beginGame(){
+	rowsCleared = 0;
+    level = 1;
+    score = -20;
+    clearBoard();
+    changeSpeed();
+    
+    var newType = Math.floor(Math.random() * 7) + 1;
+    var newColor;
+    if(newType == 1){
+    	newColor = "green";
+    }
+    else if(newType == 2){
+    	newColor = "blue";
+    }
+    else if(newType == 3){
+    	newColor = "yellow";
+    }
+    else if(newType == 4){
+    	newColor = "red";
+    }
+    else if(newType == 5){
+    	newColor = "orange";
+    }
+    else if(newType == 6){
+    	newColor = "darkorchid";
+    }
+    else{
+    	newColor = "deepskyblue";
+    }
+    nextPiece = newColor;
+    
+    keyPressed(13);
+    newBlock();
+}
+
+function loseGame(){
+	gameLost = true;
+	if(score > highScore){
+        highScore = score;
+    }
+    if(level > highLevel){
+    	highLevel = level;
+    }
+    beginGame();
+}
+
+
+
+</script>
+</body>
+</html>
